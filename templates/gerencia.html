@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FANAR — Panel de Gerencia</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --am: #FFD700;
+    --am2: #FFC200;
+    --am3: #3D3000;
+    --ng: #0A0A0A;
+    --g1: #141414;
+    --g2: #1E1E1E;
+    --g3: #2A2A2A;
+    --g4: #404040;
+    --g5: #666;
+    --bl: #F0F0E8;
+    --az: #4FC3F7;
+    --vd: #00C97A;
+    --rj: #FF4444;
+    --mo: #B084FF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--ng);
+    color: var(--bl);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--g1);
+    border-bottom: 3px solid var(--am);
+    padding: 0 32px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display:flex; align-items:center; gap:14px; }
+  .logo-hex {
+    width: 42px; height: 42px;
+    background: var(--am);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .logo-hex svg { width:20px; height:20px; }
+  .logo-name { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:4px; color:var(--am); }
+  .logo-tag { font-size:10px; color:var(--g5); letter-spacing:3px; text-transform:uppercase; margin-top:-3px; }
+
+  .header-right { display:flex; align-items:center; gap:16px; }
+  .live-dot {
+    display:flex; align-items:center; gap:6px;
+    font-size:11px; color:var(--vd);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .pulse {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--vd);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.4; transform:scale(.7); }
+  }
+  .sel-periodo-g {
+    background:var(--g2); border:1px solid var(--g3);
+    color:var(--bl); border-radius:6px;
+    padding:8px 12px;
+    font-family:'IBM Plex Mono',monospace; font-size:13px;
+    outline:none; cursor:pointer;
+  }
+  .btn-exp-g {
+    padding:9px 18px;
+    background:var(--am); color:var(--ng);
+    border:none; border-radius:6px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:600; font-size:13px;
+    cursor:pointer; display:flex; align-items:center; gap:6px;
+    transition:background .2s;
+  }
+  .btn-exp-g:hover { background:var(--am2); }
+  .btn-exp-g svg { width:15px; height:15px; }
+
+  /* ── BODY LAYOUT ── */
+  .dashboard { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── SECTION TITLE ── */
+  .sec-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:16px; letter-spacing:3px;
+    color:var(--g5);
+    margin-bottom:14px;
+    padding-left:10px;
+    border-left:3px solid var(--am);
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .kpi {
+    background:var(--g1);
+    border:1px solid var(--g3);
+    border-radius:10px;
+    padding:18px 16px;
+    position:relative;
+    overflow:hidden;
+    transition:border-color .2s;
+  }
+  .kpi::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0;
+    height:3px;
+  }
+  .kpi.am::before { background:var(--am); }
+  .kpi.az::before { background:var(--az); }
+  .kpi.vd::before { background:var(--vd); }
+  .kpi.rj::before { background:var(--rj); }
+  .kpi.mo::before { background:var(--mo); }
+  .kpi:hover { border-color:var(--g4); }
+  .kpi-icon { font-size:22px; margin-bottom:10px; }
+  .kpi-val {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:36px; line-height:1;
+    margin-bottom:4px;
+  }
+  .kpi.am .kpi-val { color:var(--am); }
+  .kpi.az .kpi-val { color:var(--az); }
+  .kpi.vd .kpi-val { color:var(--vd); }
+  .kpi.rj .kpi-val { color:var(--rj); }
+  .kpi.mo .kpi-val { color:var(--mo); }
+  .kpi-label { font-size:10px; color:var(--g5); letter-spacing:1.5px; text-transform:uppercase; }
+
+  /* ── CHART ROW ── */
+  .charts-row {
+    display:grid;
+    grid-template-columns: 2fr 1fr;
+    gap:18px;
+    margin-bottom:28px;
+  }
+  .chart-card {
+    background:var(--g1);
+    border:1px solid var(--g3);
+    border-radius:10px;
+    padding:22px;
+  }
+  .chart-card-title {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:2px;
+    color:var(--g5); text-transform:uppercase;
+    margin-bottom:16px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .chart-canvas-wrap { position:relative; }
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row {
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:18px;
+    margin-bottom:28px;
+  }
+
+  /* ── TABLE CARD ── */
+  .table-card {
+    background:var(--g1);
+    border:1px solid var(--g3);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .table-card-header {
+    padding:16px 20px;
+    border-bottom:1px solid var(--g3);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:2px;
+    color:var(--g5); text-transform:uppercase;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .badge-count {
+    background:var(--am3); color:var(--am);
+    font-size:11px; padding:2px 8px; border-radius:20px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .mini-table { width:100%; border-collapse:collapse; }
+  .mini-table th {
+    padding:8px 14px;
+    font-size:9px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--g5); background:var(--g2);
+    text-align:left; border-bottom:1px solid var(--g3);
+  }
+  .mini-table td {
+    padding:9px 14px;
+    font-size:12px;
+    font-family:'IBM Plex Mono',monospace;
+    border-bottom:1px solid var(--g2);
+    vertical-align:middle;
+  }
+  .mini-table tr:last-child td { border-bottom:none; }
+  .mini-table tbody tr:hover { background:var(--g2); }
+  .placa-tag {
+    font-weight:600; letter-spacing:2px; color:var(--am);
+    font-size:13px;
+  }
+  .dup-tag {
+    background:rgba(255,68,68,.15); color:#FF8888;
+    border:1px solid rgba(255,68,68,.3);
+    padding:1px 7px; border-radius:12px;
+    font-size:10px; letter-spacing:1px;
+  }
+
+  /* ── RANKING ── */
+  .rank-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 20px;
+    border-bottom:1px solid var(--g2);
+  }
+  .rank-item:last-child { border-bottom:none; }
+  .rank-num {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px; color:var(--g4);
+    width:28px; text-align:center; flex-shrink:0;
+  }
+  .rank-num.top { color:var(--am); }
+  .rank-info { flex:1; min-width:0; }
+  .rank-name {
+    font-size:13px; font-weight:500;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .rank-ced { font-size:10px; color:var(--g5); font-family:'IBM Plex Mono',monospace; }
+  .rank-bar-wrap { width:80px; }
+  .rank-bar {
+    height:4px; background:var(--g3); border-radius:2px; margin-bottom:3px;
+  }
+  .rank-bar-fill { height:100%; background:var(--am); border-radius:2px; }
+  .rank-cnt { font-size:11px; color:var(--am); text-align:right; font-family:'IBM Plex Mono',monospace; }
+
+  /* ── HISTORIAL ── */
+  .hist-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 20px;
+    border-bottom:1px solid var(--g2);
+  }
+  .hist-item:last-child { border-bottom:none; }
+  .hist-periodo { font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--am); }
+  .hist-nums { display:flex; gap:14px; }
+  .hist-chip {
+    font-size:11px; padding:3px 10px; border-radius:12px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .chip-m { background:rgba(255,215,0,.12); color:var(--am); }
+  .chip-v { background:rgba(79,195,247,.12); color:var(--az); }
+  .btn-hist-exp {
+    background:none; border:1px solid var(--g3); color:var(--g5);
+    border-radius:5px; padding:4px 10px; font-size:11px; cursor:pointer;
+    transition:all .2s;
+  }
+  .btn-hist-exp:hover { border-color:var(--am); color:var(--am); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:var(--ng); }
+  ::-webkit-scrollbar-thumb { background:var(--g3); border-radius:3px; }
+
+  .table-scroll { max-height:280px; overflow-y:auto; }
+
+  .empty-g { padding:32px; text-align:center; color:var(--g5); font-size:13px; }
+
+  .timestamp {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; color:var(--g5);
+    text-align:right; padding:12px 0 0;
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(3,1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .bottom-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-hex">
+      <svg viewBox="0 0 24 24" fill="#1A1A1A">
+        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">FANAR</div>
+      <div class="logo-tag">Panel de Gerencia</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot"><div class="pulse"></div>EN VIVO</div>
+    <select class="sel-periodo-g" id="sel-periodo" onchange="cargarTodo()">
+      <option>Cargando...</option>
+    </select>
+    <button class="btn-exp-g" onclick="exportarPeriodo()">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      Exportar Todo
+    </button>
+  </div>
+</header>
+
+<div class="dashboard">
+
+  <!-- KPIs -->
+  <div class="sec-title">RESUMEN DEL PERIODO</div>
+  <div class="kpi-grid">
+    <div class="kpi am">
+      <div class="kpi-icon">🏷️</div>
+      <div class="kpi-val" id="k-total">—</div>
+      <div class="kpi-label">Total Placas</div>
+    </div>
+    <div class="kpi am">
+      <div class="kpi-icon">🏍️</div>
+      <div class="kpi-val" id="k-motos">—</div>
+      <div class="kpi-label">Motocicletas</div>
+    </div>
+    <div class="kpi az">
+      <div class="kpi-icon">🚗</div>
+      <div class="kpi-val" id="k-vehiculos">—</div>
+      <div class="kpi-label">Vehículos</div>
+    </div>
+    <div class="kpi vd">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-val" id="k-hoy">—</div>
+      <div class="kpi-label">Hoy</div>
+    </div>
+    <div class="kpi rj">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-val" id="k-dup">—</div>
+      <div class="kpi-label">Duplicados</div>
+    </div>
+    <div class="kpi mo">
+      <div class="kpi-icon">👤</div>
+      <div class="kpi-val" id="k-clientes">—</div>
+      <div class="kpi-label">Clientes Únicos</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="sec-title">ACTIVIDAD Y DISTRIBUCIÓN</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <span>Registros por Día del Mes</span>
+        <span id="chart-mes-label" style="color:var(--am)"></span>
+      </div>
+      <div class="chart-canvas-wrap" style="height:220px">
+        <canvas id="chart-dias"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Motos vs Vehículos</div>
+      <div class="chart-canvas-wrap" style="height:220px; display:flex; align-items:center; justify-content:center;">
+        <canvas id="chart-donut"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="sec-title">DETALLE OPERACIONAL</div>
+  <div class="bottom-row">
+
+    <!-- DUPLICADOS -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <span>⚠ Placas Duplicadas Detectadas</span>
+        <span class="badge-count" id="badge-dup">0</span>
+      </div>
+      <div class="table-scroll" id="tabla-dup">
+        <div class="empty-g">Sin duplicados en este periodo ✓</div>
+      </div>
+    </div>
+
+    <!-- RANKING CLIENTES -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <span>🏆 Top Clientes Frecuentes</span>
+      </div>
+      <div class="table-scroll" id="lista-ranking">
+        <div class="empty-g">Sin datos</div>
+      </div>
+    </div>
+
+    <!-- HISTORIAL PERIODOS -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <span>🗂 Historial de Periodos</span>
+      </div>
+      <div class="table-scroll" id="lista-historial">
+        <div class="empty-g">Sin historial</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="timestamp" id="timestamp-txt">Actualizando...</div>
+</div>
+
+<script>
+let chartDias = null;
+let chartDonut = null;
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function periodoActual() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function fmtPeriodo(p) {
+  const [y,m] = p.split('-');
+  return `${MESES[parseInt(m)-1]} ${y}`;
+}
+
+// ── INIT ──
+window.onload = async () => {
+  await cargarPeriodos();
+  setInterval(cargarTodo, 30000);
+};
+
+async function cargarPeriodos() {
+  const res = await fetch('/api/periodos');
+  const periodos = await res.json();
+  const sel = document.getElementById('sel-periodo');
+  const actual = periodoActual();
+  const todos = [...new Set([actual, ...periodos])];
+  sel.innerHTML = todos.map(p => `<option value="${p}" ${p===actual?'selected':''}>${fmtPeriodo(p)}</option>`).join('');
+  await cargarTodo();
+}
+
+async function cargarTodo() {
+  const periodo = document.getElementById('sel-periodo').value;
+  const [motos, vehiculos] = await Promise.all([
+    fetch(`/api/registros/motos?periodo=${periodo}`).then(r=>r.json()),
+    fetch(`/api/registros/vehiculos?periodo=${periodo}`).then(r=>r.json()),
+  ]);
+  actualizarKPIs(motos, vehiculos);
+  actualizarChartDias(motos, vehiculos, periodo);
+  actualizarChartDonut(motos.length, vehiculos.length);
+  actualizarDuplicados(motos, vehiculos);
+  actualizarRanking(motos, vehiculos);
+  await cargarHistorial();
+  document.getElementById('timestamp-txt').textContent =
+    `Última actualización: ${new Date().toLocaleTimeString('es-CO')}`;
+}
+
+// ── KPIs ──
+function actualizarKPIs(motos, vehiculos) {
+  const hoy = new Date().toISOString().slice(0,10);
+  const todosHoy = [...motos, ...vehiculos].filter(r => r.fecha === hoy);
+  const dup = detectarDuplicados(motos, vehiculos);
+  const clientesUnicos = new Set([...motos,...vehiculos].map(r=>r.cedula).filter(Boolean)).size;
+
+  document.getElementById('k-total').textContent = motos.length + vehiculos.length;
+  document.getElementById('k-motos').textContent = motos.length;
+  document.getElementById('k-vehiculos').textContent = vehiculos.length;
+  document.getElementById('k-hoy').textContent = todosHoy.length;
+  document.getElementById('k-dup').textContent = dup.length;
+  document.getElementById('k-clientes').textContent = clientesUnicos;
+}
+
+// ── DUPLICADOS ──
+function detectarDuplicados(motos, vehiculos) {
+  const dups = [];
+  const verMoots = {};
+  motos.forEach(r => {
+    if (verMoots[r.placa]) dups.push({...r, tipo:'Moto'});
+    else verMoots[r.placa] = true;
+  });
+  const verVeh = {};
+  vehiculos.forEach(r => {
+    if (verVeh[r.placa]) dups.push({...r, tipo:'Vehículo'});
+    else verVeh[r.placa] = true;
+  });
+  return dups;
+}
+
+function actualizarDuplicados(motos, vehiculos) {
+  const dups = detectarDuplicados(motos, vehiculos);
+  document.getElementById('badge-dup').textContent = dups.length;
+  const cont = document.getElementById('tabla-dup');
+  if (!dups.length) {
+    cont.innerHTML = '<div class="empty-g">Sin duplicados en este periodo ✓</div>';
+    return;
+  }
+  cont.innerHTML = `<table class="mini-table">
+    <thead><tr><th>Placa</th><th>Tipo</th><th>Cliente</th><th>Fecha</th></tr></thead>
+    <tbody>${dups.map(r=>`
+      <tr>
+        <td><span class="placa-tag">${r.placa}</span></td>
+        <td><span class="dup-tag">${r.tipo}</span></td>
+        <td>${r.cliente||'—'}</td>
+        <td>${r.fecha||'—'}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ── RANKING ──
+function actualizarRanking(motos, vehiculos) {
+  const todos = [...motos, ...vehiculos];
+  const conteo = {};
+  todos.forEach(r => {
+    const key = r.cedula || r.cliente || 'Sin datos';
+    if (!conteo[key]) conteo[key] = { nombre: r.cliente||'—', cedula: r.cedula||'—', n:0 };
+    conteo[key].n++;
+  });
+  const ranking = Object.values(conteo).sort((a,b)=>b.n-a.n).slice(0,8);
+  const max = ranking[0]?.n || 1;
+  const cont = document.getElementById('lista-ranking');
+  if (!ranking.length) { cont.innerHTML='<div class="empty-g">Sin datos</div>'; return; }
+  cont.innerHTML = ranking.map((r,i)=>`
+    <div class="rank-item">
+      <div class="rank-num ${i<3?'top':''}">${i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${r.nombre}</div>
+        <div class="rank-ced">${r.cedula}</div>
+      </div>
+      <div class="rank-bar-wrap">
+        <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round(r.n/max*100)}%"></div></div>
+        <div class="rank-cnt">${r.n} placa${r.n!==1?'s':''}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── HISTORIAL ──
+async function cargarHistorial() {
+  const res = await fetch('/api/periodos');
+  const periodos = await res.json();
+  const cont = document.getElementById('lista-historial');
+  if (!periodos.length) { cont.innerHTML='<div class="empty-g">Sin historial</div>'; return; }
+
+  const items = await Promise.all(periodos.map(async p => {
+    const [m,v] = await Promise.all([
+      fetch(`/api/registros/motos?periodo=${p}`).then(r=>r.json()),
+      fetch(`/api/registros/vehiculos?periodo=${p}`).then(r=>r.json()),
+    ]);
+    return { p, motos: m.length, vehiculos: v.length };
+  }));
+
+  cont.innerHTML = items.map(it=>`
+    <div class="hist-item">
+      <div class="hist-periodo">${fmtPeriodo(it.p)}</div>
+      <div class="hist-nums">
+        <span class="hist-chip chip-m">🏍 ${it.motos}</span>
+        <span class="hist-chip chip-v">🚗 ${it.vehiculos}</span>
+      </div>
+      <button class="btn-hist-exp" onclick="exportarPeriodoEsp('${it.p}')">↓ Excel</button>
+    </div>`).join('');
+}
+
+// ── CHARTS ──
+function actualizarChartDias(motos, vehiculos, periodo) {
+  const [y,m] = periodo.split('-').map(Number);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  const labels = Array.from({length:diasEnMes},(_,i)=>String(i+1));
+
+  const cM = new Array(diasEnMes).fill(0);
+  const cV = new Array(diasEnMes).fill(0);
+  motos.forEach(r => { if(r.fecha){ const d=parseInt(r.fecha.split('-')[2])-1; if(d>=0&&d<diasEnMes) cM[d]++; } });
+  vehiculos.forEach(r => { if(r.fecha){ const d=parseInt(r.fecha.split('-')[2])-1; if(d>=0&&d<diasEnMes) cV[d]++; } });
+
+  document.getElementById('chart-mes-label').textContent = fmtPeriodo(periodo);
+
+  if (chartDias) chartDias.destroy();
+  chartDias = new Chart(document.getElementById('chart-dias'), {
+    type:'bar',
+    data: {
+      labels,
+      datasets:[
+        { label:'Motos', data:cM, backgroundColor:'rgba(255,215,0,.75)', borderColor:'#FFD700', borderWidth:1, borderRadius:3 },
+        { label:'Vehículos', data:cV, backgroundColor:'rgba(79,195,247,.6)', borderColor:'#4FC3F7', borderWidth:1, borderRadius:3 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#888', font:{family:'IBM Plex Mono',size:11} } } },
+      scales:{
+        x:{ ticks:{color:'#555',font:{size:10}}, grid:{color:'rgba(255,255,255,.04)'} },
+        y:{ ticks:{color:'#555',font:{size:10},stepSize:1}, grid:{color:'rgba(255,255,255,.06)'}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function actualizarChartDonut(nm, nv) {
+  if (chartDonut) chartDonut.destroy();
+  chartDonut = new Chart(document.getElementById('chart-donut'), {
+    type:'doughnut',
+    data:{
+      labels:['Motocicletas','Vehículos'],
+      datasets:[{
+        data:[nm, nv],
+        backgroundColor:['rgba(255,215,0,.8)','rgba(79,195,247,.8)'],
+        borderColor:['#FFD700','#4FC3F7'],
+        borderWidth:2,
+        hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:'65%',
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#888', font:{family:'IBM Plex Mono',size:11}, padding:16 } },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed} placas` } }
+      }
+    }
+  });
+}
+
+// ── EXPORT ──
+function exportarPeriodo() {
+  const periodo = document.getElementById('sel-periodo').value;
+  exportarPeriodoEsp(periodo);
+}
+function exportarPeriodoEsp(periodo) {
+  window.open(`/api/exportar/motos?periodo=${periodo}`,'_blank');
+  setTimeout(()=>{ window.open(`/api/exportar/vehiculos?periodo=${periodo}`,'_blank'); }, 800);
+}
+</script>
+
+</body>
+</html>
